@@ -18,6 +18,7 @@ Sub-processes:
     7. Docusign Add Envelope Recipients
     8. Docusign Delete Recipients
     
-#Walkthrough of processes   
+#Walkthrough of processes
+
   ##Docusign Get Documents
   
