@@ -2,7 +2,7 @@
 
 Location: Boomi Directory Docusign, under Boventus.
 
-Main Process: Docusign *Active*
+Main Process: Docusign
 
 Sub-processes:
 
