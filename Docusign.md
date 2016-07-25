@@ -11,10 +11,10 @@ Sub-processes:
     1. Docusign Get Documents 
     2. Docusign Get Envelope Fields Exogen
     3. Docusign Get Envelope Fields SAP
-    4. Docusign Get Envelope Recipients
     
 ##Inactive
     
+    4. Docusign Get Envelope Recipients
     5. Docusign Password Grant and API Call
     6. Docusign Get Documents Combined
     7. Docusign Add Envelope Recipients
@@ -148,8 +148,3 @@ Each stored procedure starts by dynamically pivoting the [BV_STG].[dbo].[zDocusi
     b.	If the recipient does not exist, it will fail. This shouldn’t be a problem, since the value is obtained from looking up the recipient id in a prior step, with no modifications in between. 
     c.	This will only pull the first recipient id from the file. There needs to be a modification to get all recipient ids, and run delete recipient on each one, or a subset.
 
-
-
-
-
-##Docusign Get Documents
