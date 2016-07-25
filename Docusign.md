@@ -4,14 +4,14 @@ Location: Boomi Directory Docusign, under Boventus.
 Main Process: Docusign *Active*
 Sub-processes:
 
-    ##Active
+##Active
     
     1. Docusign Get Documents 
     2. Docusign Get Envelope Fields Exogen
     3. Docusign Get Envelope Fields SAP
     4. Docusign Get Envelope Recipients
     
-    ##Inactive
+##Inactive
     
     5. Docusign Password Grant and API Call
     6. Docusign Get Documents Combined
