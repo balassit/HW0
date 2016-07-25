@@ -22,6 +22,28 @@ Sub-processes:
     
 #General Connection Information
 
+Our goal is to connect to DocuSign RESTful calls in Boomi, using HTTP Connections with an authentication token.
+The Docusign Rest API Guide Version 2 details the requirements
+
+Docusign can use JSON or XML for the request and response formats. The default is json, but can be changed by appending ".json" or".xml" to the end of a resource call. 
+
+Ex. https://preview.docusign.net/restapi/v2/accounts/{accountId}/envelopes.json
+
+Envelope status codes (page 15 of the API Guide)
+    1. Created
+    2. Deleted
+    3. Sent
+    4. Delivered
+    5. Signed
+    6. Completed
+    7. Declined
+    8. Voided
+    9. Timed out
+    10. Authritative Copy
+    11. Transfer Completed
+    12. Template
+    13. Correct
+
 
 
 #Walkthrough of processes
