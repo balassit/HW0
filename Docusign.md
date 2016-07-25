@@ -90,16 +90,19 @@ The authroization header must be included in all calls. It is saved as a process
     d. The route is based on the name of the document, and checked against hard coded strings for the completed document JSON profiles and database tables that have been completed thus far.
 
 3. Get Document
+
     a. Returns a pdf version of the documents in the envelope. This sub process stops here, and has not sent the pdf file to a location. The pdf may be sent to sharepoint, or another destination, at another time. 
     b. Other part of the branch redirects to a subprocess to obtain the fields of the document.
     
 ##Docusign Get Envelope Fields Exogen/SAP
 
 1. Get Envelope Recipients
+
     a. Obtains a JSON file of the fields of the specified document
     b. Goes to a branch to map the content of the file. The fields that are saved include: tabLabel, documentId, EnvelopeId, and value. The envelope Id is obtained through a get dynamic process property, which goes back to when it was saved in the previous process under Get Document List. 
 
 2. Mappings and Branches
+
     a. The first branch, "Recipient ID Exogen/SAP FOrm" is a cache to save all recipient IDs from the JSON file. The recipient IDs are used in the mapping for signature and initials, so that the value is the name/email combination for that recipient ID. The "value" field for signature and initial tabs is either 1 or 0, for true or false, which does not provide much valuable information.
     b. The date signed tab can ensure that the document was signed by the recipient, and the name/email combination determines who it was. Name alone is not sufficient, because more than one person could have that name.
     c. Each branch sends an insert statement through the BOBJSQL connection to the [BV_STG].[dbo].[zDocusign_Document_Temp] database table. This can be seen in the Docusign Form Fields Database Profile. 
@@ -109,9 +112,24 @@ The authroization header must be included in all calls. It is saved as a process
 ##Datebase
 
 1. Inital Load
+
     a. The first table populated is the [BV_STG].[dbo].[zDocusign_Document_Temp] which has columns for  tabLabel, documentId, EnvelopeId, and value. This table can be used for all docusign forms, since each form has the same valueable information. The tabLabel is the description of a field on the form. The document ID and envelope ID are used to identify the document, and the value is the value of the field from the form.
     b. The [BV_STG].[dbo].[zDocusign_Document_Temp] is assumed to be created already, and is not created on execution of a Boomi process. If the table is dropped, then the database inserts would fail. 
-    c. A 
+    c. After the data is inserted in this table, the stored procedure for the specific document type is executed.
+    
+2. Stored Procedure
+    a. sp_Docusign_Exogen_Patient_Assistance_Form
+    b. sp_docusign_Global_SAP_Security_Acess_Form
+Each stored procedure starts by dynamically pivoting the [BV_STG].[dbo].[zDocusign_Document_Temp] table on the tabLabel and value. This steps make the rows for the tabLabel into column headers, and the value is placed under each column. By doing this, a tabel is created with one row, and however many columns are needed, based on the number of tabLabels. This section can be copied for all docusign database loads, and eases the process of generating the table data. The tabel created is [BV_STG].[dbo].[zdocusign]
+
+3. [BV_STG].[dbo].[zdocusign]
+    a. This table is temporarily used to merge the incoming data with the final table for the document type. The data cannot be directly inserted into the final table, because it may already exist, and duplciates should not be made. 
+    b. The merge or insert step for each document type will be different, and manually created. There is no way to dynamically merge or insert. The format will remain the same, but the values from tabLabel will be different, which means that the coolumn names will differ. I merge when the envelope and document id are identical, which should ensure that that the same document is being updated, rather than a new one created. The target table is [zDocusign_SAP_Form] or whatever the document type is, and the created table for it. The source data is from the [BV_STG].[dbo].[zdocusign] table. 
+    c. After mergining or inserting the row into the correct table, the temporary tabel [BV_STG].[dbo].[zdocusign] is dropped. Note that it most be dropped the column names may differ on the next execution. The [BV_STG].[dbo].[zDocusign_Document_Temp] is deleted, which only deletes the data from the table, but not the format of the columns.
+    
+    
+    
+    
     
 4.	Get Envelope Fields
 
