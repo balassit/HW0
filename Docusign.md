@@ -60,48 +60,72 @@ There are also Recipient Status Codes listed below the Envelope Status Codes.
 
 The authroization header must be included in all calls. It is saved as a process property, and does not have tochange between executions. Each operation has the authorization header as a parameter. The autorization header can be revoked and reset. The production environment only allows 10 to be generated and kept active, so it is important to use few and save their values.
 
-1.)	Get Login Info
+1.	Get Login Info
 
     a.	Connection has url https://demo.docusign.net/restapi/v2 (the base URL), there is no account ID, yet. 
     b.	Operation appends ‘/login_information?api_password=true&include_account_id_guid=true&login_settings=all’ which will retrieve the account ID that will be used for the remaining steps. Other information is available, but not currently used.
     c.	The account_id is saved in a dynamic process property, so that it is appended in each remaining step.
     
-2.)	Get Envelopes 
+2.	Get Envelopes 
 
     a.	https://demo.docusign.net/restapi/v2/{account_id}/envelopes?from_date={year-month-day}&status={status}
     b.	Retrieves a list of the envelopes based on the query provided. Currently, the query is a static string set in the parameters list. This is where you would choose from the list of statuses mentioned above, for envelopes.
     c.	Each envelope has a list of URIs that are saved to be used in the remaining steps. The Envelope Uri is mapped to a flat file, so that it can be referenced in the proceeding steps. 
     d.	A split on the envelope ID is used to run each envelope through the proceeding operations.
 
-3.) A branch is used in case the process is intended to execute all sub processes. However, it may be of best practice to separate the processes.
+3. A branch is used in case the process is intended to execute all sub processes. However, it may be of best practice to separate the processes.
 
-##Docusign Get Envelope
+##Docusign Get Documents
 
-1.) Get Envelope
+1. Get Envelope
     
     a. Retrieves Uris for a specific envelope. This list includes the documents/recipients/envelope/templates/certificate uri and the envelope ID.
     b. Saves each uri as a dynamic process property so that the following operations can use them. 
     
-2.) Get Document List
+2. Get Document List
     
     a. Retrieves a list of all documents in this envelope.
     b. Saves the evelope ID, name of document, and uri from the "Docusign Document Response JSON Profile" to the "Document Names Flat File Profile" via Document Names Map
     c. The purpose of this steps is to route the document to the correct subprocess, so the fields of the document match the correct JSON profile.
     d. The route is based on the name of the document, and checked against hard coded strings for the completed document JSON profiles and database tables that have been completed thus far.
+
+3. Get Document
+    a. Returns a pdf version of the documents in the envelope. This sub process stops here, and has not sent the pdf file to a location. The pdf may be sent to sharepoint, or another destination, at another time. 
+    b. Other part of the branch redirects to a subprocess to obtain the fields of the document.
     
-4.)	Get Envelope Recipients
+##Docusign Get Envelope Fields Exogen/SAP
+
+1. Get Envelope Recipients
+    a. Obtains a JSON file of the fields of the specified document
+    b. Goes to a branch to map the content of the file. The fields that are saved include: tabLabel, documentId, EnvelopeId, and value. The envelope Id is obtained through a get dynamic process property, which goes back to when it was saved in the previous process under Get Document List. 
+
+2. Mappings and Branches
+    a. The first branch, "Recipient ID Exogen/SAP FOrm" is a cache to save all recipient IDs from the JSON file. The recipient IDs are used in the mapping for signature and initials, so that the value is the name/email combination for that recipient ID. The "value" field for signature and initial tabs is either 1 or 0, for true or false, which does not provide much valuable information.
+    b. The date signed tab can ensure that the document was signed by the recipient, and the name/email combination determines who it was. Name alone is not sufficient, because more than one person could have that name.
+    c. Each branch sends an insert statement through the BOBJSQL connection to the [BV_STG].[dbo].[zDocusign_Document_Temp] database table. This can be seen in the Docusign Form Fields Database Profile. 
+    d. The last branch clears the envelope ID from the dynamic process proerty, so that it is not used in the following executions. There was a problem with gauranteeing that the same envelope ID was not used later, but with testing, this branch may be removed.
+    e. The update stored procedure step runs a stored procedure to pivot the data and place it in the correct final table. More information on this step is provided in the database section.
+
+##Datebase
+
+1. Inital Load
+    a. The first table populated is the [BV_STG].[dbo].[zDocusign_Document_Temp] which has columns for  tabLabel, documentId, EnvelopeId, and value. This table can be used for all docusign forms, since each form has the same valueable information. The tabLabel is the description of a field on the form. The document ID and envelope ID are used to identify the document, and the value is the value of the field from the form.
+    b. The [BV_STG].[dbo].[zDocusign_Document_Temp] is assumed to be created already, and is not created on execution of a Boomi process. If the table is dropped, then the database inserts would fail. 
+    c. A 
+    
+4.	Get Envelope Fields
 
     a.	?include_tabs=true is appended as a static value to obtain all tabs of the document. 
     b.	Important fields: Name (type), value, document id, recipient id, tab id, signedDateTime, deliveredDateTime, status, recipient count, tabLabel
-5.)	Get Documents Combined
+5.	Get Documents Combined
 
     a.	Returns a pdf version of all of the documents in this envelope.
     b.	Static parameter ‘?show_changes=true’ can be used to highlight the fields that were changed. 
-6.)	Get Documents
+6.	Get Documents
 
     a.	Using the split shape, get all envelopes one at a time.
     b.	Get the list of documents in each envelope, then obtain the uri for each one, and save it flat file with the name of the document, and the document id.
-7.)	Delete Recipient
+7.	Delete Recipient
 
     a.	Uses Envelope Combined Documents profile, from #5 to append the recipient id to the url. 
     b.	If the recipient does not exist, it will fail. This shouldn’t be a problem, since the value is obtained from looking up the recipient id in a prior step, with no modifications in between. 
