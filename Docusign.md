@@ -61,13 +61,11 @@ There are also Recipient Status Codes listed below the Envelope Status Codes.
 The authroization header must be included in all calls. It is saved as a process property, and does not have tochange between executions. Each operation has the authorization header as a parameter. The autorization header can be revoked and reset. The production environment only allows 10 to be generated and kept active, so it is important to use few and save their values.
 
 1.	Get Login Info
-
     a.	Connection has url https://demo.docusign.net/restapi/v2 (the base URL), there is no account ID, yet. 
     b.	Operation appends ‘/login_information?api_password=true&include_account_id_guid=true&login_settings=all’ which will retrieve the account ID that will be used for the remaining steps. Other information is available, but not currently used.
     c.	The account_id is saved in a dynamic process property, so that it is appended in each remaining step.
     
 2.	Get Envelopes 
-
     a.	https://demo.docusign.net/restapi/v2/{account_id}/envelopes?from_date={year-month-day}&status={status}
     b.	Retrieves a list of the envelopes based on the query provided. Currently, the query is a static string set in the parameters list. This is where you would choose from the list of statuses mentioned above, for envelopes.
     c.	Each envelope has a list of URIs that are saved to be used in the remaining steps. The Envelope Uri is mapped to a flat file, so that it can be referenced in the proceeding steps. 
